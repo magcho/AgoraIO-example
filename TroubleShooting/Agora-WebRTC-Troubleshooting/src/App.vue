@@ -41,7 +41,7 @@
               </v-card-text>
               <v-card-text class="proxy" v-if="isEnableCloudProxy">
                 <v-label>{{text.cloudProxy_mode}}</v-label>
-                <v-btn-toggle v-model.lazy="fixProxyPort"rounded>
+                <v-btn-toggle v-model.lazy="fixProxyPort" rounded>
                   <v-btn :value=false @click.native="toggleProxyMode(false)">{{text.cloudProxy_default}}</v-btn>
                   <v-btn :value=true @click.native="toggleProxyMode(true)">{{text.cloudProxy_fix}}</v-btn>
                 </v-btn-toggle>
@@ -127,115 +127,10 @@
                     </v-layout>
                   </v-container>
                 </v-stepper-content>
-                <!-- microphone check -->
-                <v-stepper-content step="1">
-                  <v-container grid-list-md>
-                    <v-layout row wrap>
-                      <v-flex md6 xs12>
-                        <v-card color="info" style="height: 100%" class="white--text">
-                          <v-card-title>
-                            <div class="headline">
-                              {{text.microphone_check}}
-                            </div>
-                          </v-card-title>
-                          <v-card-text>
-                            {{text.microphone_check_desc}}
-                          </v-card-text>
-                        </v-card>
-                      </v-flex>
-                      <v-flex md6 xs12>
-                        <v-card style="height: 100%">
-                          <v-card-title>
-                            {{text.microphone_volume_check_desc}}
-                          </v-card-title>
-                          <v-card-text>
-                            <v-progress-linear :value="inputVolume"></v-progress-linear>
-                          </v-card-text>
-                        </v-card>
-                      </v-flex>
-                    </v-layout>
-                  </v-container>
-                </v-stepper-content>
-
-                <!-- speaker check -->
-                <v-stepper-content step="2">
-                  <v-container grid-list-md>
-                    <v-layout row wrap>
-                      <v-flex md6 xs12>
-                        <v-card color="info" class="white--text" style="height: 100%">
-                          <v-card-title>
-                            <div class="headline">{{text.speacker_check}}</div>
-                          </v-card-title>
-                          <v-card-text>
-                            {{text.speaker_check_desc}}
-                          </v-card-text>
-                          <v-card-actions>
-                            <v-btn @click="resolveCheck">{{text.yes}}</v-btn>
-                            <v-btn flat @click="rejectCheck">{{text.no}}</v-btn>
-                          </v-card-actions>
-                        </v-card>
-                      </v-flex>
-
-                      <v-flex md6 xs12>
-                        <v-card style="height: 100%">
-                          <v-card-title>
-                            <div class="headline">{{text.sample_music}}</div>
-                          </v-card-title>
-                          <v-card-text>
-                            <audio id="sampleMusic" controls="controls">
-                              <source src="./assets/music.mp3" type="audio/mp3">
-                              {{text.sample_music_desc}}
-                            </audio>
-                          </v-card-text>
-                        </v-card>
-                      </v-flex>
-                    </v-layout>
-                  </v-container>
-                </v-stepper-content>
-
-                <!-- resolution check -->
-                <v-stepper-content step="3">
-                  <v-container grid-list-md>
-                    <v-layout row wrap>
-                      <v-flex md6 xs12>
-                        <v-card color="info" class="white--text" style="height: 100%">
-                          <v-card-title>
-                            <div class="headline">{{text.resolution_check}}</div>
-                          </v-card-title>
-                          <v-card-text>
-                            {{text.resolution_check_desc}}
-                          </v-card-text>
-                        </v-card>
-                      </v-flex>
-
-                      <v-flex md6 xs12>
-                        <v-card style="height: 100%">
-                          <v-card-title>
-                            {{text.resolution_list}}
-                          </v-card-title>
-                          <v-card-text>
-                            <v-list>
-                              <v-list-tile v-for="(item, index) in profiles" :key="index">
-                                <v-list-tile-content>
-                                  {{`${item.width} * ${item.height}`}}
-                                </v-list-tile-content>
-                                <v-list-tile-action>
-                                  <v-icon v-if="item.status==='resolve'" color="success">done</v-icon>
-                                  <v-icon v-else-if="item.status==='reject'" color="error">close</v-icon>
-                                  <v-icon v-else>more_horiz</v-icon>
-                                </v-list-tile-action>
-                              </v-list-tile>
-                            </v-list>
-                          </v-card-text>
-                        </v-card>
-                      </v-flex>
-                    </v-layout>
-                  </v-container>
-                </v-stepper-content>
               </v-stepper-items>
 
                 <!-- connection check -->
-                <v-stepper-content step="4">
+                <v-stepper-content step="1">
                   <v-container grid-list-md>
                     <v-layout row wrap>
                       <v-flex md12>
@@ -329,17 +224,10 @@
 </template>
 
 <script>
-import  VConsole  from  'vconsole'
 import AgoraRtc from "agora-rtc-sdk";
 const langs = ['zh', 'en'];
 import { profileArray, APP_ID } from "./utils/settings";
 import * as i18n from './utils/i18n'
-
-const log = console.log.bind(console)
-
-// If need mobile phone terminal debugging
-// let vConsole = new VConsole()
-// log("testVConsole")
 
 export default {
   name: "App",
@@ -379,25 +267,7 @@ export default {
           extra: ""
         },
         {
-          id: "1",
-          label: "microphone",
-          notError: true,
-          extra: ""
-        },
-        {
           id: "2",
-          label: "speaker",
-          notError: true,
-          extra: ""
-        },
-        {
-          id: "3",
-          label: "resolution",
-          notError: true,
-          extra: ""
-        },
-        {
-          id: "4",
           label: "connection",
           notError: true,
           extra: ""
@@ -753,78 +623,10 @@ export default {
         testSuite.notError
           ? (testSuite.extra = this.t("fully_supported"))
           : (testSuite.extra = this.t("some_functions_may_be_limited"));
-        this.handleMicrophoneCheck();
+          this.handleConnectivityCheck()
       }, 3000);
     },
 
-    handleMicrophoneCheck() {
-      this.currentTestSuite = "1";
-      let testSuite = this.testSuites["1"];
-      this.sendStream = AgoraRtc.createStream({
-        streamID: this.sendId,
-        video: false,
-        audio: true,
-        screen: false
-      });
-      this.sendStream.init(
-        () => {
-          this.sendStream.play("test-send");
-          let totalVolume = 0;
-          this.microphoneCheckTimer = setInterval(() => {
-            this.inputVolume = Math.floor(
-              this.sendStream.getAudioLevel() * 100
-            );
-            totalVolume += this.inputVolume;
-          }, 100);
-          setTimeout(() => {
-            clearInterval(this.microphoneCheckTimer);
-            this.sendStream.close();
-            if (totalVolume < 60) {
-              testSuite.notError = false;
-              testSuite.extra = this.t("can_barely_hear_you");
-            } else {
-              testSuite.extra = this.t("microphone_works_well");
-            }
-            this.handleSpeakerCheck();
-          }, 7000);
-        },
-        err => {
-          // do next test
-          testSuite.notError = false;
-          testSuite.extra = err.msg;
-          try {
-            this.sendStream.close();
-          } catch (error) {
-            throw(error);
-          } finally {
-            this.handleSpeakerCheck();
-          }
-        }
-      );
-    },
-
-    handleSpeakerCheck() {
-      this.currentTestSuite = "2";
-    },
-
-    resolveCheck() {
-      let testSuite = this.testSuites[this.currentTestSuite];
-      testSuite.extra = this.t('speaker_works_well');
-      let sound = document.querySelector("#sampleMusic");
-      sound.pause();
-      sound.currentTime = 0;
-      this.handleCameraCheck();
-    },
-
-    rejectCheck() {
-      let testSuite = this.testSuites[this.currentTestSuite];
-      testSuite.notError = false;
-      testSuite.extra = this.t("speaker_wrong");
-      let sound = document.querySelector("#sampleMusic");
-      sound.pause();
-      sound.currentTime = 0;
-      this.handleCameraCheck();
-    },
 
     toggleProxy(val) {
       this.isEnableCloudProxy = val;
@@ -834,42 +636,9 @@ export default {
       this.fixProxyPort = val;
     },
 
-    async handleCameraCheck() {
-      this.currentTestSuite = "3";
-      let testSuite = this.testSuites["3"];
-      for (let item of this.profiles) {
-        await this.checkProfile(item)
-          .then(() => {
-            this.sendStream && this.sendStream.close();
-          })
-          .catch(err => {
-            if (err === "Resolution mismatched") {
-              testSuite.notError = false;
-              testSuite.extra = err.msg;
-              this.sendStream && this.sendStream.close();
-            }
-          });
-      }
-
-      if (this.profiles) {
-        let arr = [];
-        this.profiles.forEach(item => {
-          let str = `${item.width} * ${item.height} ${
-            this.t(item.status === "resolve" ? "support" : "not_support")
-          }`;
-          arr.push(str);
-        });
-        testSuite.extra = arr.join("</br>");
-      }
-
-      setTimeout(() => {
-        this.handleConnectivityCheck();
-      }, 1500);
-    },
-
     async handleConnectivityCheck() {
-      this.currentTestSuite = "4";
-      let testSuite = this.testSuites["4"];
+      this.currentTestSuite = "1";
+      let testSuite = this.testSuites["1"];
       // init client and stream
       try {
         await this.initRecvClient();
