@@ -224,7 +224,8 @@
 </template>
 
 <script>
-import AgoraRtc from "agora-rtc-sdk";
+// import AgoraRtc from "agora-rtc-sdk";
+import AgoraRtc from 'agora-rtc-sdk-ng'
 const langs = ['zh', 'en'];
 import { profileArray, APP_ID } from "./utils/settings";
 import * as i18n from './utils/i18n'
@@ -365,8 +366,12 @@ export default {
       this.sendClient = AgoraRtc.createClient({ mode: 'live', codec: 'h264' });
       this.recvClient = AgoraRtc.createClient({ mode: 'live', codec: 'h264' });
       if(this.isEnableCloudProxy && this.fixProxyPort){
-        this.sendClient.startProxyServer(2);
-        this.recvClient.startProxyServer(2);
+        // eslint-disable-next-line no-unused-vars
+        const Force_UDPモード = 3
+        // eslint-disable-next-line no-unused-vars
+        const Force_TCPモード = 5
+        this.sendClient.startProxyServer(Force_UDPモード);
+        this.recvClient.startProxyServer(Force_UDPモード);
       }
       else if(this.isEnableCloudProxy && !this.fixProxyPort){
         this.sendClient.startProxyServer();
@@ -374,122 +379,135 @@ export default {
       }
     },
 
-    initSendClient() {
-      return new Promise((resolve, reject) => {
-        this.sendStream = AgoraRtc.createStream({
-          streamID: this.sendId,
-          video: true,
-          audio: true,
-          screen: false
-        });
-        this.sendStream.setVideoProfile("720p_2");
-        this.sendClient.init(
-          APP_ID,
-          () => {
-            this.sendStream.init(
-              () => {
-                this.sendClient.join(
-                  null,
-                  this.channel,
-                  this.sendId,
-                  () => {
-                    this.sendClient.publish(this.sendStream, err => {
-                      reject(err);
-                    });
-                    setTimeout(() => {
-                      resolve();
-                    });
-                  },
-                  err => {
-                    reject(err);
-                  }
-                );
-              },
-              err => {
-                reject(err);
-              }
-            );
-          },
-          err => {
-            reject(err);
-          }
-        );
-      });
+    async initSendClient() {
+        this.sendStream = {
+          audio: AgoraRtc.createMicrophoneAudioTrack(),
+          video: AgoraRtc.createCameraVideoTrack()
+        }
+        await this.sendClient.join(APP_ID, this.channel)
+        await this.sendClient.publish([this.sendStream.audio, this.sendStream.video])
+
+        // this.sendStream = AgoraRtc.createStream({
+        //   streamID: this.sendId,
+        //   video: true,
+        //   audio: true,
+        //   screen: false
+        // });
+        // this.sendStream.setVideoProfile("720p_2");
+        
+
+        // this.sendClient.init(
+        //   APP_ID,
+        //   () => {
+        //     this.sendStream.init(
+        //       () => {
+        //         this.sendClient.join(
+        //           null,
+        //           this.channel,
+        //           this.sendId,
+        //           () => {
+        //             this.sendClient.publish(this.sendStream, err => {
+        //               reject(err);
+        //             });
+        //             setTimeout(() => {
+        //               resolve();
+        //             });
+        //           },
+        //           err => {
+        //             reject(err);
+        //           }
+        //         );
+        //       },
+        //       err => {
+        //         reject(err);
+        //       }
+        //     );
+        //   },
+        //   err => {
+        //     reject(err);
+        //   }
+        // );
     },
 
-    initRecvClient() {
-      return new Promise((resolve, reject) => {
-        this.recvClient.init(
-          APP_ID,
-          () => {
-            this.recvClient.join(
-              null,
-              this.channel,
-              this.recvId,
-              () => {
-                this.recvClient.on("stream-added", evt => {
-                  this.recvClient.subscribe(evt.stream, err => {
-                    clearInterval(this.detectInterval);
-                    this.bitrateData = {};
-                    this.packetsData = {};
-                    this.testSuites["4"].notError = false;
-                    this.testSuites["4"].extra = err.msg;
-                    this.destructAll();
-                    this.currentTestSuite = "5";
-                  });
-                });
-                this.recvClient.on("stream-removed", () => {
-                  clearInterval(this.detectInterval);
-                  this.bitrateData = {};
-                  this.packetsData = {};
-                  this.testSuites["4"].notError = false;
-                  this.testSuites["4"].extra = "Disconnected";
-                  this.destructAll();
-                  this.currentTestSuite = "5";
-                });
-                this.recvClient.on("stream-subscribed", evt => {
-                  this.recvStream = evt.stream;
-                  this.recvStream.disableAudio();
-                  this.recvStream.play("test-recv");
-                  let i = 1;
-                  this.detectInterval = setInterval(() => {
-                    this.recvStream.getStats(e => {
-                      this.bitrateData.rows.push({
-                        index: i,
-                        tVideoBitrate: this._calcBitrate(
-                          e.videoReceiveBytes, i
-                        ),
-                        tAudioBitrate: this._calcBitrate(
-                          e.audioReceiveBytes, i
-                        )
-                      });
-                      this.packetsData.rows.push({
-                        index: i,
-                        tVideoPacketLoss: this._calcPacketLoss(
-                          e.videoReceivePackets,
-                          e.videoReceivePacketsLost
-                        ),
-                        tAudioPacketLoss: this._calcPacketLoss(
-                          e.audioReceivePackets,
-                          e.audioReceivePacketsLost
-                        ),
-                      });
-                      i++;
-                    });
-                  }, 1000);
-                });
-                resolve();
-              },
-              err => {
-                reject(err);
-              }
-            );
-          },
-          err => {
-            reject(err);
-          }
-        );
-      });
+    async initRecvClient() {
+      await this.recvClient.join(APP_ID, this.channel)
+      await this.recvClient.on('user-published',async(remoteUser, mediatype)=>{
+        await this.recvClientl.subscribe(remoteUser, mediatype)
+
+      })
+
+      // return new Promise((resolve, reject) => {
+      //   this.recvClient.init(
+      //     APP_ID,
+      //     () => {
+      //       this.recvClient.join(
+      //         null,
+      //         this.channel,
+      //         this.recvId,
+      //         () => {
+      //           this.recvClient.on("stream-added", evt => {
+      //             this.recvClient.subscribe(evt.stream, err => {
+      //               clearInterval(this.detectInterval);
+      //               this.bitrateData = {};
+      //               this.packetsData = {};
+      //               this.testSuites["4"].notError = false;
+      //               this.testSuites["4"].extra = err.msg;
+      //               this.destructAll();
+      //               this.currentTestSuite = "5";
+      //             });
+      //           });
+      //           this.recvClient.on("stream-removed", () => {
+      //             clearInterval(this.detectInterval);
+      //             this.bitrateData = {};
+      //             this.packetsData = {};
+      //             this.testSuites["4"].notError = false;
+      //             this.testSuites["4"].extra = "Disconnected";
+      //             this.destructAll();
+      //             this.currentTestSuite = "5";
+      //           });
+      //           this.recvClient.on("stream-subscribed", evt => {
+      //             this.recvStream = evt.stream;
+      //             this.recvStream.disableAudio();
+      //             this.recvStream.play("test-recv");
+      //             let i = 1;
+      //             this.detectInterval = setInterval(() => {
+      //               this.recvStream.getStats(e => {
+      //                 this.bitrateData.rows.push({
+      //                   index: i,
+      //                   tVideoBitrate: this._calcBitrate(
+      //                     e.videoReceiveBytes, i
+      //                   ),
+      //                   tAudioBitrate: this._calcBitrate(
+      //                     e.audioReceiveBytes, i
+      //                   )
+      //                 });
+      //                 this.packetsData.rows.push({
+      //                   index: i,
+      //                   tVideoPacketLoss: this._calcPacketLoss(
+      //                     e.videoReceivePackets,
+      //                     e.videoReceivePacketsLost
+      //                   ),
+      //                   tAudioPacketLoss: this._calcPacketLoss(
+      //                     e.audioReceivePackets,
+      //                     e.audioReceivePacketsLost
+      //                   ),
+      //                 });
+      //                 i++;
+      //               });
+      //             }, 1000);
+      //           });
+      //           resolve();
+      //         },
+      //         err => {
+      //           reject(err);
+      //         }
+      //       );
+      //     },
+      //     err => {
+      //       reject(err);
+      //     }
+      //   );
+      // });
     },
 
     /**
