@@ -2079,10 +2079,10 @@ address@^1.0.3:
   version "1.0.3"
   resolved "http://registry.npm.taobao.org/address/download/address-1.0.3.tgz#b5f50631f8d6cec8bd20c963963afb55e06cbce9"
 
-agora-rtc-sdk@3.1.1:
-  version "3.1.1"
-  resolved "https://registry.yarnpkg.com/agora-rtc-sdk/-/agora-rtc-sdk-3.1.1.tgz#bf22c141dcbb896861bafb573db82af0e9dae87a"
-  integrity sha512-PWe0Yg7k5DS7/G+kz6h3AVparmUYUEs162DpILZNg4vYhd/O7TE+FlPx4ilamml351ImO5TNtYcH0k/RGeKHLw==
+agora-rtc-sdk@3.6.11:
+  version "3.6.11"
+  resolved "https://registry.yarnpkg.com/agora-rtc-sdk/-/agora-rtc-sdk-3.6.11.tgz#113ec8b75fd07038e5726eb47b21a20c4fd7cd6f"
+  integrity sha512-/uOlQeLg+GrR3qJe9UQ39GbHK7OrsLobi3t2W4shG5G7pm1CSPZJUYsWksHlcLgZG0fzvxKcDkGeNQ2AleqniQ==
 
 ajv-errors@^1.0.0:
   version "1.0.1"
@@ -3846,6 +3846,11 @@ dotenv-expand@^5.1.0:
   version "5.1.0"
   resolved "https://registry.yarnpkg.com/dotenv-expand/-/dotenv-expand-5.1.0.tgz#3fbaf020bfd794884072ea26b1e9791d45a629f0"
   integrity sha512-YXQl1DSa4/PQyRfgrv6aoNjhasp/p4qs9FjJ4q4cQk+8m4r6k4ZSiEyytKG8f8W9gi8WsQtIObNmKd+tMzNTmA==
+
+dotenv@^16.0.3:
+  version "16.0.3"
+  resolved "https://registry.yarnpkg.com/dotenv/-/dotenv-16.0.3.tgz#115aec42bac5053db3c456db30cc243a5a836a07"
+  integrity sha512-7GO6HghkA5fYG9TYnNxi14/7K9f5occMlp3zXAuSxn7CKCxt9xbNWG7yF8hTCSUchlfWSe3uLmlPfigevRItzQ==
 
 dotenv@^7.0.0:
   version "7.0.0"
