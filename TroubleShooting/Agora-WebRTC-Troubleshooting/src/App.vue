@@ -357,6 +357,7 @@ export default {
     },
 
     initialize() {
+      window.global_sendStream = {}
       this.ts = new Date().getTime();
       this.channel =
         String(this.ts).slice(7) +
@@ -364,7 +365,9 @@ export default {
       this.sendId = Number.parseInt(String(this.ts).slice(7), 10) * 10 + 1;
       this.recvId = Number.parseInt(String(this.ts).slice(7), 10) * 10 + 2;
       this.sendClient = AgoraRtc.createClient({ mode: 'live', codec: 'h264' });
+      this.sendClient.setClientRole('host');
       this.recvClient = AgoraRtc.createClient({ mode: 'live', codec: 'h264' });
+      this.recvClient.setClientRole('audience')
       if(this.isEnableCloudProxy && this.fixProxyPort){
         // eslint-disable-next-line no-unused-vars
         const Force_UDPモード = 3
@@ -379,19 +382,19 @@ export default {
       }
     },
 
-    async initSendClient() {
-        this.sendStream = {
-          audio: AgoraRtc.createMicrophoneAudioTrack(),
-          video: AgoraRtc.createCameraVideoTrack()
+    async initSendClient() {        
+        window.global_sendStream = {
+          audio: await AgoraRtc.createMicrophoneAudioTrack(),
+          video: await AgoraRtc.createCameraVideoTrack()
         }
-        await this.sendClient.join(APP_ID, this.channel)
-        await this.sendClient.publish([this.sendStream.audio, this.sendStream.video])
+        await this.sendClient.join(APP_ID, this.channel, null)
+        await this.sendClient.publish([window.global_sendStream.audio, window.global_sendStream.video])
     },
 
     async initRecvClient() {
-      await this.recvClient.join(APP_ID, this.channel)
+      await this.recvClient.join(APP_ID, this.channel, null)
 
-      this.recvClient.on('user-published',async(remoteUser, mediatype)=>{
+      this.recvClient.on('user-published', async (remoteUser, mediatype)=>{
         try {
           const remoteTraks = await this.recvClient.subscribe(remoteUser, mediatype)  
 
@@ -432,11 +435,12 @@ export default {
             }, 1000);
           
         }catch (err){
+          console.log(this.testSuites,':sushi:')
           clearInterval(this.detectInterval);
           this.bitrateData = {};
           this.packetsData = {};
-          this.testSuites["4"].notError = false;
-          this.testSuites["4"].extra = err.msg;
+          this.testSuites[1].notError = false;
+          this.testSuites[1].extra = err.msg;
           await this.destructAll();
           this.currentTestSuite = "5";
         }
@@ -446,8 +450,8 @@ export default {
         clearInterval(this.detectInterval);
         this.bitrateData = {};
         this.packetsData = {};
-        this.testSuites["4"].notError = false;
-        this.testSuites["4"].extra = "Disconnected";
+        this.testSuites[1].notError = false;
+        this.testSuites[1].extra = "Disconnected";
         await this.destructAll();
         this.currentTestSuite = "5";
       })
@@ -478,9 +482,15 @@ export default {
 
     async destructAll() {
       try {
-        this.sendStream && this.sendStream.close();
+        if(window.global_sendStream){
+          window.global_sendStream.audio.stop()
+          window.global_sendStream.audio.close()  
+          
+          window.global_sendStream.video.stop()
+          window.global_sendStream.video.close()
+        }
         this.recvStream && this.recvStream.close();
-        await this.sendClient.unpublish([this.sendStream.audio,this.sendStream.video]);
+        // await this.sendClient.unpublish([window.global_sendStream.audio, window.global_sendStream.video]);
         this.sendClient.leave();
         this.recvClient.leave();
         if(this.isEnableCloudProxy){
@@ -546,12 +556,14 @@ export default {
     handleCompatibilityCheck() {
       this.currentTestSuite = "0";
       let testSuite = this.testSuites["0"];
-      setTimeout(() => {
-        testSuite.notError = AgoraRtc.checkSystemRequirements();
-        testSuite.notError
-          ? (testSuite.extra = this.t("fully_supported"))
-          : (testSuite.extra = this.t("some_functions_may_be_limited"));
-          this.handleConnectivityCheck()
+      setTimeout(async () => {
+        testSuite.notError =  AgoraRtc.checkSystemRequirements();
+        if(testSuite.notError){
+          (testSuite.extra = this.t("fully_supported")) 
+        }else{
+          (testSuite.extra = this.t("some_functions_may_be_limited"));
+        }
+        await this.handleConnectivityCheck()
       }, 3000);
     },
 
@@ -566,11 +578,13 @@ export default {
 
     async handleConnectivityCheck() {
       this.currentTestSuite = "1";
-      let testSuite = this.testSuites["1"];
+      let testSuite = this.testSuites[0];
       // init client and stream
       try {
         await this.initRecvClient();
-        await this.initSendClient();
+        setTimeout(async() => {
+          await this.initSendClient();
+        }, 1000);        
         this.renderChart = true;
       } catch (err) {
         testSuite.extra = err.msg;
@@ -639,9 +653,9 @@ export default {
     },
 
     retry(currentIndex) {
-      if (this.sendStream && this.sendStream.isPlaying()) {
-        this.sendStream.stop();
-        this.sendStream.close();
+      if (window.global_sendStream && window.global_sendStream.isPlaying()) {
+        window.global_sendStream.stop();
+        window.global_sendStream.close();
       }
       //If the resolution is equal to not supported, 1. Do not play video stream; 2. Give error prompt
       if (this.ProfileForTry[currentIndex].isSuccess) {
@@ -650,16 +664,16 @@ export default {
         this.showVideo = false
         return
       }
-      this.sendStream = AgoraRtc.createStream({
+      window.global_sendStream = AgoraRtc.createStream({
         streamID: this.sendId,
         video: true,
         audio: true,
         screen: false
       });
-      this.sendStream.setVideoProfile(this.ProfileForTry[currentIndex].resolution);
-      this.sendStream.init(
+      window.global_sendStream.setVideoProfile(this.ProfileForTry[currentIndex].resolution);
+      window.global_sendStream.init(
         () => {
-          this.sendStream.play("modal-video");
+          window.global_sendStream.play("modal-video");
         },
         err => {
           this.errMsgForTry = err.msg;
@@ -669,8 +683,8 @@ export default {
 
     endTry() {
       this.dialog = false;
-      this.sendStream.stop();
-      this.sendStream.close();
+      window.global_sendStream.stop();
+      window.global_sendStream.close();
     }
   }
 };
