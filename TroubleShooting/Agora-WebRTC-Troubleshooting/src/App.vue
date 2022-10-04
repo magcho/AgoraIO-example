@@ -227,7 +227,7 @@
 // import AgoraRtc from "agora-rtc-sdk";
 import AgoraRtc from 'agora-rtc-sdk-ng'
 const langs = ['zh', 'en'];
-import { profileArray, APP_ID } from "./utils/settings";
+import { profileArray, APP_ID as DEFINED_APP_ID } from "./utils/settings";
 import * as i18n from './utils/i18n'
 
 export default {
@@ -387,12 +387,14 @@ export default {
           audio: await AgoraRtc.createMicrophoneAudioTrack(),
           video: await AgoraRtc.createCameraVideoTrack()
         }
-        await this.sendClient.join(APP_ID, this.channel, null)
+        const appId = window.APP_ID || DEFINED_APP_ID
+        await this.sendClient.join(appId, this.channel, null)
         await this.sendClient.publish([window.global_sendStream.audio, window.global_sendStream.video])
     },
 
     async initRecvClient() {
-      await this.recvClient.join(APP_ID, this.channel, null)
+      const appId = window.APP_ID || DEFINED_APP_ID
+      await this.recvClient.join(appId, this.channel, null)
 
       this.recvClient.on('user-published', async (remoteUser, mediatype)=>{
         try {
