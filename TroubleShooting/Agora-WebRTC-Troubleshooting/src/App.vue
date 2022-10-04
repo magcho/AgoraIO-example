@@ -396,19 +396,20 @@ export default {
 
       this.recvClient.on('user-published', async (remoteUser, mediatype)=>{
         try {
-          const remoteTraks = await this.recvClient.subscribe(remoteUser, mediatype)  
+          await this.recvClient.subscribe(remoteUser, mediatype)  
 
           // this.recvStream = evt.stream;
           if(mediatype === 'video'){
-            remoteTraks.videoTrack.play("test-recv")
+            remoteUser.videoTrack.play("test-recv")
           }
             // this.recvStream.disableAudio();
             
             let i = 1;
             this.detectInterval = setInterval(() => {
-              const videoStats = this.recvClient.getRemoteVideoStats                        
-              const audioStats = this.recvClient.getRemoteAudioStats
-              
+              const videoStats = this.recvClient.getRemoteVideoStats()                        
+              const audioStats = this.recvClient.getRemoteAudioStats()
+              console.log(':sushi:',{videoStats, audioStats})
+
               this.bitrateData.rows.push({
                 index: i,
                 tVideoBitrate: this._calcBitrate(
@@ -435,7 +436,6 @@ export default {
             }, 1000);
           
         }catch (err){
-          console.log(this.testSuites,':sushi:')
           clearInterval(this.detectInterval);
           this.bitrateData = {};
           this.packetsData = {};
