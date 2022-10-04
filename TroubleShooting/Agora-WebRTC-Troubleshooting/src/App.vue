@@ -431,9 +431,66 @@ export default {
 
     async initRecvClient() {
       await this.recvClient.join(APP_ID, this.channel)
-      await this.recvClient.on('user-published',async(remoteUser, mediatype)=>{
-        await this.recvClientl.subscribe(remoteUser, mediatype)
 
+      this.recvClient.on('user-published',async(remoteUser, mediatype)=>{
+        try {
+          const remoteTraks = await this.recvClient.subscribe(remoteUser, mediatype)  
+
+          // this.recvStream = evt.stream;
+          if(mediatype === 'video'){
+            remoteTraks.videoTrack.play("test-recv")
+          }
+            // this.recvStream.disableAudio();
+            
+            let i = 1;
+            this.detectInterval = setInterval(() => {
+              const videoStats = this.recvClient.getRemoteVideoStats                        
+              const audioStats = this.recvClient.getRemoteAudioStats
+              
+              this.bitrateData.rows.push({
+                index: i,
+                tVideoBitrate: this._calcBitrate(
+                  videoStats.receiveBytes, i
+                ),
+                tAudioBitrate: this._calcBitrate(
+                  audioStats.receiveBytes, i
+                )
+              })
+
+              this.packetsData.rows.push({
+                index: i,
+                tVideoPacketLoss: this._calcPacketLoss(
+                  videoStats.receivePackets,
+                  videoStats.receivePacketsLost  
+                ),
+                tAudioPacketLoss: this._calcPacketLoss(
+                  audioStats.receivePackets,
+                  audioStats.receivePacketsLost
+                ),
+              });
+
+              i++;
+            }, 1000);
+          
+        }catch (err){
+          clearInterval(this.detectInterval);
+          this.bitrateData = {};
+          this.packetsData = {};
+          this.testSuites["4"].notError = false;
+          this.testSuites["4"].extra = err.msg;
+          await this.destructAll();
+          this.currentTestSuite = "5";
+        }
+      })
+      // eslint-disable-next-line no-unused-vars
+      this.recvClient.on('user-unpublished', async _ => {
+        clearInterval(this.detectInterval);
+        this.bitrateData = {};
+        this.packetsData = {};
+        this.testSuites["4"].notError = false;
+        this.testSuites["4"].extra = "Disconnected";
+        await this.destructAll();
+        this.currentTestSuite = "5";
       })
 
       // return new Promise((resolve, reject) => {
@@ -533,11 +590,11 @@ export default {
       return Number.parseFloat(recvBytes / seconds / 1000 * 8).toFixed(2);
     },
 
-    destructAll() {
+    async destructAll() {
       try {
         this.sendStream && this.sendStream.close();
         this.recvStream && this.recvStream.close();
-        this.sendClient.unpublish(this.sendStream);
+        await this.sendClient.unpublish([this.sendStream.audio,this.sendStream.video]);
         this.sendClient.leave();
         this.recvClient.leave();
         if(this.isEnableCloudProxy){
@@ -548,39 +605,6 @@ export default {
       } catch (err) {
         throw(err);
       }
-    },
-
-    checkProfile(profile) {
-      return new Promise((resolve, reject) => {
-        this.sendStream && this.sendStream.stop();
-        this.sendStream = AgoraRtc.createStream({
-          streamID: this.sendId,
-          video: true,
-          audio: true,
-          screen: false
-        });
-        this.sendStream.setVideoProfile(profile.resolution);
-        this.sendStream.init(
-          () => {
-            this.sendStream.play("test-send");
-            setTimeout(() => {
-              let videoElement = document.querySelector("#video" + this.sendId);
-              let videoArea = videoElement.videoWidth * videoElement.videoHeight
-              let profileArea = profile.width * profile.height
-              if (videoArea === profileArea) {
-                profile.status = "resolve";
-                resolve();
-              } else {
-                profile.status = "reject";
-                reject("Resolution mismatched");
-              }
-            }, 1000);
-          },
-          err => {
-            reject(err);
-          }
-        );
-      });
     },
 
     start() {
@@ -673,8 +697,8 @@ export default {
         return false;
       }
       // go on
-      setTimeout(() => {
-        this.destructAll();
+      setTimeout(async () => {
+        await this.destructAll();
         setTimeout(() => {
           this.testing = false;
           this.currentTestSuite = "5";
