@@ -227,7 +227,7 @@
 // import AgoraRtc from "agora-rtc-sdk";
 import AgoraRtc from 'agora-rtc-sdk-ng'
 const langs = ['zh', 'en'];
-import { profileArray, APP_ID as DEFINED_APP_ID } from "./utils/settings";
+import { profileArray, APP_ID as DEFINED_APP_ID, APP_ID } from "./utils/settings";
 import * as i18n from './utils/i18n'
 
 export default {
@@ -344,6 +344,9 @@ export default {
         },
       }
     },
+    appId(){
+      return DEFINED_APP_ID || APP_ID
+    }
   },
 
   methods: {
@@ -386,15 +389,13 @@ export default {
         window.global_sendStream = {
           audio: await AgoraRtc.createMicrophoneAudioTrack(),
           video: await AgoraRtc.createCameraVideoTrack()
-        }
-        const appId = window.APP_ID || DEFINED_APP_ID
-        await this.sendClient.join(appId, this.channel, null)
+        }        
+        await this.sendClient.join(this.appId, this.channel, null)
         await this.sendClient.publish([window.global_sendStream.audio, window.global_sendStream.video])
     },
 
     async initRecvClient() {
-      const appId = window.APP_ID || DEFINED_APP_ID
-      await this.recvClient.join(appId, this.channel, null)
+      await this.recvClient.join(this.appId, this.channel, null)
 
       this.recvClient.on('user-published', async (remoteUser, mediatype)=>{
         try {
@@ -407,10 +408,12 @@ export default {
             // this.recvStream.disableAudio();
             
             let i = 1;
+            if(this.detectInterval){
+              clearInterval(this.detectInterval)
+            }
             this.detectInterval = setInterval(() => {
-              const videoStats = this.recvClient.getRemoteVideoStats()                        
-              const audioStats = this.recvClient.getRemoteAudioStats()
-              console.log(':sushi:',{videoStats, audioStats})
+              const videoStats = Object.values(this.recvClient.getRemoteVideoStats())[0]                        
+              const audioStats = Object.values(this.recvClient.getRemoteAudioStats())[0]
 
               this.bitrateData.rows.push({
                 index: i,
@@ -433,7 +436,6 @@ export default {
                   audioStats.receivePacketsLost
                 ),
               });
-
               i++;
             }, 1000);
           
@@ -506,7 +508,7 @@ export default {
     },
 
     start() {
-      if (!APP_ID) {
+      if (!this.appId) {
         alert("APP_ID cannot be empty!");
         return;
       }
@@ -591,10 +593,11 @@ export default {
       } catch (err) {
         testSuite.extra = err.msg;
         testSuite.notError = false;
-        setTimeout(() => {
+        setTimeout(async () => {
           this.testing = false;
           this.currentTestSuite = "5";
           this.snackbar = true;
+          await this.destructAll()
         }, 1500);
         return false;
       }
