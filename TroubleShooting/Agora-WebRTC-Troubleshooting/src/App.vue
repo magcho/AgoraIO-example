@@ -129,30 +129,55 @@
                 </v-stepper-content>
               </v-stepper-items>
 
-                <!-- connection check -->
-                <v-stepper-content step="1">
-                  <v-container grid-list-md>
-                    <v-layout row wrap>
-                      <v-flex md12>
-                        <v-card >
-                          <v-card-title>
-                            <div>{{text.network_check_desc}}</div>
-                          </v-card-title>
-                          <v-card-text v-if="renderChart">
-                            <v-layout row wrap>
-                              <v-flex md6 xs12>
-                                <linechart :grid="grid" :data="bitrateData" :settings="bitrateChartSettings"></linechart>
-                              </v-flex>
-                              <v-flex md6 xs12>
-                                <linechart :grid="grid" :data="packetsData" :settings="packetsChartSettings"></linechart>
-                              </v-flex>
-                            </v-layout>
-                          </v-card-text>
-                        </v-card>
-                      </v-flex>
-                    </v-layout>
-                  </v-container>
-                </v-stepper-content>
+              <!-- connection check -->
+              <v-stepper-content step="1">
+                <v-container grid-list-md>
+                  <v-layout row wrap>
+                    <v-flex md12>
+                      <v-card >
+                        <v-card-title>
+                          <div>{{text.network_check_desc}}</div>
+                        </v-card-title>
+                        <v-card-text v-if="renderChart">
+                          <v-layout row wrap>
+                            <v-flex md6 xs12>
+                              <linechart :grid="grid" :data="bitrateData" :settings="bitrateChartSettings"></linechart>
+                            </v-flex>
+                            <v-flex md6 xs12>
+                              <linechart :grid="grid" :data="packetsData" :settings="packetsChartSettings"></linechart>
+                            </v-flex>
+                          </v-layout>
+                        </v-card-text>
+                      </v-card>
+                    </v-flex>
+                  </v-layout>
+                </v-container>
+              </v-stepper-content>
+
+              <!-- rtm check -->
+              <v-stepper-content step="2">
+                <v-container grid-list-md>
+                  <v-layout row wrap>
+                    <v-flex md12>
+                      <v-card  :loading="loading">
+                        <v-card-title>
+                          <div>rtm check</div>
+                        </v-card-title>
+                          <template slot="progress">
+                          <v-progress-linear
+                            color="deep-purple"
+                            height="10"
+                            indeterminate
+                          ></v-progress-linear>
+                        </template>
+                        <v-card-text>
+                          
+                        </v-card-text>
+                      </v-card>
+                    </v-flex>
+                  </v-layout>
+                </v-container>
+              </v-stepper-content>
             </v-stepper>
             <!-- test area -->
             <div id="test-send"></div>
@@ -229,6 +254,8 @@ import AgoraRtc from 'agora-rtc-sdk-ng'
 const langs = ['zh', 'en'];
 import { profileArray, APP_ID as DEFINED_APP_ID, APP_ID } from "./utils/settings";
 import * as i18n from './utils/i18n'
+import { initializeRtm } from './utils/rtmCheck'
+import AgoraRTM from 'agora-rtm-sdk';
 
 export default {
   name: "App",
@@ -272,6 +299,12 @@ export default {
           label: "connection",
           notError: true,
           extra: ""
+        },
+        {
+          id: "3",
+          label: 'rtm',
+          notError: true,
+          extra:''
         }
       ],
       bitrateData: {
@@ -582,7 +615,7 @@ export default {
 
     async handleConnectivityCheck() {
       this.currentTestSuite = "1";
-      let testSuite = this.testSuites[0];
+      let testSuite = this.testSuites[1];
       // init client and stream
       try {
         await this.initRecvClient();
@@ -595,7 +628,7 @@ export default {
         testSuite.notError = false;
         setTimeout(async () => {
           this.testing = false;
-          this.currentTestSuite = "5";
+          // this.currentTestSuite = "5";
           this.snackbar = true;
           await this.destructAll()
         }, 1500);
@@ -604,9 +637,9 @@ export default {
       // go on
       setTimeout(async () => {
         await this.destructAll();
-        setTimeout(() => {
+        setTimeout(async () => {
           this.testing = false;
-          this.currentTestSuite = "5";
+          // this.currentTestSuite = "5";
           this.snackbar = true;
           if (
             this.bitrateData.rows.length === 1 ||
@@ -637,9 +670,48 @@ export default {
             ${ this.t('Audio_Bitrate')}: ${ audioBitrate } kbps </br>
             ${ this.t('Video_Packet_Loss')}: ${ videoPacketLoss } % </br>
             ${ this.t('Audio_Packet_Loss')}: ${ audioPacketLoss } % </br>`;
+
+            await this.rtmCheck()
           }
         }, 1500);
       }, 21500);
+    },
+
+    async rtmCheck(){
+      try {
+        this.testing = true;
+        this.currentTestSuite = "2";
+        const testSuite = this.testSuites[2]
+        
+        // 初期化処理をして、コネクションを貼れれば疎通したとみなす
+        // await initializeRtm()j
+
+        const appId = this.appId
+        const client = AgoraRTM.createInstance(appId)
+
+        client.on('ConnectionStateChanged', async (state, reason)=>{
+          if(state === 'CONNECTED'){
+            this.testing = false;
+            this.currentTestSuite = "5";
+            testSuite.extra = 'conection OK (RTM)'
+            testSuite.notError = true
+          }else if(state === 'CONNECTING') {
+            // noop
+          }else{
+            this.testing = false;
+            this.currentTestSuite = "5";
+            testSuite.extra = 'conection NG (RTM)'
+            testSuite.notError = false
+            throw Error(state)
+          }
+        })
+        await client.login({uid: 'hogemaru'})
+
+
+      } catch (error) {        
+        this.testing = false;
+        this.currentTestSuite = "5";
+      }
     },
 
     haveATry() {
