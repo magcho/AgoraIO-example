@@ -5,25 +5,25 @@ const getAppid = ()=>{
   return DEFINED_APP_ID || window.APP_ID
 }
 
-export const initalizeRtm = ()=>{
-  console.log('hello')
+export const initalizeRtm = (useProxy = false)=>{
   return new Promise(async (resolve, reject)=>{
     const appId = getAppid()
 
-    const client = AgoraRtm.createInstance(appId)
+    const client = AgoraRtm.createInstance(appId,{
+      enableCloudProxy: useProxy,
+      logFilter: AgoraRtm.LOG_FILTER_DEBUG 
+    })
 
     client.on('ConnectionStateChanged', async (state, reason)=>{
-      console.log(':sushi:',reason)
       if(state === 'CONNECTED'){
-        console.log('conected', reason)
-        resolve()
-      }else if(state === 'ABORTED'){
-        console.error(reason)
-        reject()
+        resolve(state)
+      }else if(state === 'CONNECTING') {
+        // noop
+      }else{
+        reject(state)
       }
-
-      await client.logout()
     })
+    await client.login({uid: 'hogemaru'})
 
     await client.login({
       uid: (Math.random()*10000).toString(),

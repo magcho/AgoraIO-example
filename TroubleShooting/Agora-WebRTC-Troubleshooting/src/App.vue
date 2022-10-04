@@ -678,41 +678,45 @@ export default {
     },
 
     async rtmCheck(){
+      this.testing = true;
+      this.currentTestSuite = "2";       
+      const testSuite = this.testSuites[2]
       try {
-        this.testing = true;
-        this.currentTestSuite = "2";
-        const testSuite = this.testSuites[2]
-        
         // 初期化処理をして、コネクションを貼れれば疎通したとみなす
-        // await initializeRtm()j
+        await initializeRtm()
 
-        const appId = this.appId
-        const client = AgoraRTM.createInstance(appId)
-
-        client.on('ConnectionStateChanged', async (state, reason)=>{
-          if(state === 'CONNECTED'){
-            this.testing = false;
-            this.currentTestSuite = "5";
-            testSuite.extra = 'conection OK (RTM)'
-            testSuite.notError = true
-          }else if(state === 'CONNECTING') {
-            // noop
-          }else{
-            this.testing = false;
-            this.currentTestSuite = "5";
-            testSuite.extra = 'conection NG (RTM)'
-            testSuite.notError = false
-            throw Error(state)
-          }
-        })
-        await client.login({uid: 'hogemaru'})
-
-
+        // client.on('ConnectionStateChanged', async (state, reason)=>{
+        //   if(state === 'CONNECTED'){
+        //     this.testing = false;
+        //     this.currentTestSuite = "5";
+        //     testSuite.extra = 'conection OK (RTM)'
+        //     testSuite.notError = true
+        //   }else if(state === 'CONNECTING') {
+        //     // noop
+        //   }else{
+        //     this.testing = false;
+        //     this.currentTestSuite = "5";
+        //     testSuite.extra = 'conection NG (RTM)'
+        //     testSuite.notError = false
+        //     throw Error(state)
+        //   }
+        // })
       } catch (error) {        
         this.testing = false;
         this.currentTestSuite = "5";
+
+        this.testing = false;
+        this.currentTestSuite = "5";
+        testSuite.extra = 'conection NG (RTM)'
+        testSuite.notError = false
       }
+
+      this.testing = false;
+        this.currentTestSuite = "5";
+        testSuite.extra = 'conection OK (RTM)'
+        testSuite.notError = true
     },
+
 
     haveATry() {
       this.snackbar = false;
