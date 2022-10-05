@@ -32,7 +32,12 @@
                   {{text.following_step}}
                 </div>
               </v-card-title>
-              <v-card-text class="proxy">
+              <v-card-text>
+                <v-btn v-if="!testing" color="success" @click.native="start">
+                  {{text.start_text}}
+                </v-btn>
+              </v-card-text>
+              <!-- <v-card-text class="proxy">
                 <v-label>{{text.cloudProxy}}</v-label>
                 <v-btn-toggle v-model.lazy="isEnableCloudProxy" rounded>
                   <v-btn :value=true @click.native="toggleProxy(true)">{{text.cloudProxy_enable}}</v-btn>
@@ -58,7 +63,7 @@
                     </v-list-tile-content>
                   </v-list-tile>
                 </v-list>
-              </v-card-text>
+              </v-card-text> -->
 
             </v-card>
           </v-flex>
@@ -71,16 +76,16 @@
                 </v-toolbar-title>
               </v-toolbar>
               <v-list>
-                <v-list-group v-for="item in testSuites" :key="item.id">
-                  <v-list-tile slot="activator">
+                <v-list-item v-for="item in testSuites" :key="item.id">                  
+                  <v-list-tile>
                     <v-icon v-if="item.notError" color="success">done</v-icon>
                     <v-icon v-else color="error">close</v-icon>
                     <span>{{t(item.label)}}</span>
                   </v-list-tile>
-                  <v-list-tile>
+                  <v-list-content class="result-content">
                     <v-list-tile-content v-html="item.extra"></v-list-tile-content>
-                  </v-list-tile>
-                </v-list-group>
+                  </v-list-content>
+                </v-list-item>
               </v-list>
             </v-card>
           </v-flex>
@@ -154,31 +159,61 @@
                 </v-container>
               </v-stepper-content>
 
-              <!-- rtm check -->
+              <!-- rtm check -->              
               <v-stepper-content step="2">
                 <v-container grid-list-md>
                   <v-layout row wrap>
-                    <v-flex md12>
-                      <v-card  :loading="loading">
+                     <v-flex md6 xs12>
+                      <v-card style="height: 100%" color="info" class="white--text">
                         <v-card-title>
-                          <div>rtm check</div>
+                          <div class="headline">
+                            RTM(normal) check
+                          </div>
                         </v-card-title>
-                          <template slot="progress">
-                          <v-progress-linear
-                            color="deep-purple"
-                            height="10"
-                            indeterminate
-                          ></v-progress-linear>
-                        </template>
                         <v-card-text>
-                          
+                          {{text.support_desc}}
+                        </v-card-text>
+                      </v-card>
+                    </v-flex>
+                    <v-flex md6 xs12>
+                      <v-card>
+                        <v-card-text>
+                          <p>RTM connection testing...</p>
                         </v-card-text>
                       </v-card>
                     </v-flex>
                   </v-layout>
                 </v-container>
               </v-stepper-content>
+
+              <!-- rtm check -->
+              <v-stepper-content step="3">
+                <v-container grid-list-md>
+                  <v-layout row wrap>
+                    <v-flex md6 xs12>
+                      <v-card style="height: 100%" color="info" class="white--text">
+                        <v-card-title>
+                          <div class="headline">
+                            RTM(proxy) check
+                          </div>
+                        </v-card-title>
+                        <v-card-text>
+                          {{text.support_desc}}
+                        </v-card-text>
+                      </v-card>
+                    </v-flex>
+                    <v-flex md6 xs12>
+                      <v-card>
+                        <v-card-text>
+                          <p>RTM connection testing...</p>
+                        </v-card-text>
+                      </v-card>
+                    </v-flex>
+                  </v-layout>
+                </v-container> 
+              </v-stepper-content>
             </v-stepper>
+            
             <!-- test area -->
             <div id="test-send"></div>
             <div id="test-recv"></div>
@@ -254,8 +289,10 @@ import AgoraRtc from 'agora-rtc-sdk-ng'
 const langs = ['zh', 'en'];
 import { profileArray, APP_ID as DEFINED_APP_ID, APP_ID } from "./utils/settings";
 import * as i18n from './utils/i18n'
-import { initializeRtm } from './utils/rtmCheck'
-import AgoraRTM from 'agora-rtm-sdk';
+// import { initializeRtm } from './utils/rtmCheck'
+import AgoraRtm from 'agora-rtm-sdk'
+
+const sleep = msec => new Promise(resolve => setTimeout(resolve, msec));
 
 export default {
   name: "App",
@@ -302,10 +339,16 @@ export default {
         },
         {
           id: "3",
-          label: 'rtm',
+          label: 'rtm_disable_proxy',
           notError: true,
           extra:''
-        }
+        },
+        {
+          id: "4",
+          label: 'rtm_enable_proxy',
+          notError: true,
+          extra:''
+        },
       ],
       bitrateData: {
           columns: ['index', 'tVideoBitrate', 'tAudioBitrate'],
@@ -342,7 +385,8 @@ export default {
           isSuccess: false
         },
       ],
-      currentProfile: 0
+      currentProfile: 0,
+      isUsingProxyRtcStatus: false,
     };
   },
 
@@ -416,6 +460,12 @@ export default {
         this.sendClient.startProxyServer();
         this.recvClient.startProxyServer();
       }
+
+      this.sendClient.on('join-fallback-to-proxy', ()=>{
+          this.isUsingProxyRtcStatus = true
+          console.log(':sushi:','fallback' )
+        }
+      )
     },
 
     async initSendClient() {        
@@ -669,55 +719,95 @@ export default {
             testSuite.extra = `${ this.t('Video_Bitrate')}: ${ videoBitrate } kbps </br>
             ${ this.t('Audio_Bitrate')}: ${ audioBitrate } kbps </br>
             ${ this.t('Video_Packet_Loss')}: ${ videoPacketLoss } % </br>
-            ${ this.t('Audio_Packet_Loss')}: ${ audioPacketLoss } % </br>`;
-
-            await this.rtmCheck()
+            ${ this.t('Audio_Packet_Loss')}: ${ audioPacketLoss } % </br>
+            proxyStatus: ${this.isUsingProxyRtcStatus.toString()}`;
           }
+          await this.rtmCheckDisableProxy()
+          await this.rtmCheckEnableProxy()
         }, 1500);
       }, 21500);
     },
 
-    async rtmCheck(){
+    async rtmCheckDisableProxy(){
       this.testing = true;
       this.currentTestSuite = "2";       
       const testSuite = this.testSuites[2]
       try {
         // 初期化処理をして、コネクションを貼れれば疎通したとみなす
-        await initializeRtm()
+        await this.initializeRtm({useProxy: false})
+        /** loginをするとLOGGEDINイベントが発火した後、ちょっとしてから
+         *  login failedエラーが起こり、エラーをイベントで拾えないのでちょっとするまで待つ
+        */        
+        await sleep(2000) 
+      } catch (error) {        
+        this.testing = false;
+        this.currentTestSuite = "3";
 
-        // client.on('ConnectionStateChanged', async (state, reason)=>{
-        //   if(state === 'CONNECTED'){
-        //     this.testing = false;
-        //     this.currentTestSuite = "5";
-        //     testSuite.extra = 'conection OK (RTM)'
-        //     testSuite.notError = true
-        //   }else if(state === 'CONNECTING') {
-        //     // noop
-        //   }else{
-        //     this.testing = false;
-        //     this.currentTestSuite = "5";
-        //     testSuite.extra = 'conection NG (RTM)'
-        //     testSuite.notError = false
-        //     throw Error(state)
-        //   }
-        // })
+        testSuite.extra = 'conection NG (RTM)'
+        testSuite.notError = false
+        console.error(error)
+
+        return
+      }
+
+      this.testing = false;
+      this.currentTestSuite = "3";
+      testSuite.extra = 'conection OK (RTM)'
+      testSuite.notError = true
+    },
+
+    async rtmCheckEnableProxy(){
+      this.testing = true;
+      this.currentTestSuite = "3";       
+      const testSuite = this.testSuites[3]
+      try {
+        // 初期化処理をして、コネクションを貼れれば疎通したとみなす
+        await this.initializeRtm({useProxy: true})
+        
       } catch (error) {        
         this.testing = false;
         this.currentTestSuite = "5";
 
-        this.testing = false;
-        this.currentTestSuite = "5";
         testSuite.extra = 'conection NG (RTM)'
         testSuite.notError = false
+        console.error(error)
+
+        return
       }
 
       this.testing = false;
-        this.currentTestSuite = "5";
-        testSuite.extra = 'conection OK (RTM)'
-        testSuite.notError = true
+      this.currentTestSuite = "5";
+      testSuite.extra = 'conection OK (RTM)'
+      testSuite.notError = true
     },
+    async initializeRtm({useProxy}){
+      return new Promise(async (resolve, reject)=>{
+        const appId = this.appId
 
+        const client = AgoraRtm.createInstance(appId,{
+          enableCloudProxy: useProxy,
+          logFilter: AgoraRtm.LOG_FILTER_DEBUG 
+        })
 
+        client.on('ConnectionStateChanged', async (state, reason)=>{
+          if(state === 'CONNECTED'){
+            resolve(state)
+          }else if(state === 'CONNECTING') {
+            // noop
+          }else{
+            reject(state)
+          }          
+        })
+
+        try{
+          await client.login({
+            uid: (Math.random()*10000).toString(),
+          })          
+        }catch(e){
+          reject(e)
+        }
+      })
+    },
     haveATry() {
       this.snackbar = false;
       this.dialog = true;
@@ -908,4 +998,7 @@ export default {
   .v-card {
     min-width: 280px;
   }
+.v-list__tile__content{
+  margin-left: 4rem;
+}
 </style>

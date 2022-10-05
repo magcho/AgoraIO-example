@@ -5,7 +5,7 @@ const getAppid = ()=>{
   return DEFINED_APP_ID || window.APP_ID
 }
 
-export const initalizeRtm = (useProxy = false)=>{
+export const initalizeRtm = ({useProxy})=>{
   return new Promise(async (resolve, reject)=>{
     const appId = getAppid()
 
@@ -20,7 +20,7 @@ export const initalizeRtm = (useProxy = false)=>{
       }else if(state === 'CONNECTING') {
         // noop
       }else{
-        reject(state)
+        reject(state, reason)
       }
     })
     await client.login({uid: 'hogemaru'})
