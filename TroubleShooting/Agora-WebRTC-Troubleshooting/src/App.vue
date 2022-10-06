@@ -37,34 +37,6 @@
                   {{text.start_text}}
                 </v-btn>
               </v-card-text>
-              <!-- <v-card-text class="proxy">
-                <v-label>{{text.cloudProxy}}</v-label>
-                <v-btn-toggle v-model.lazy="isEnableCloudProxy" rounded>
-                  <v-btn :value=true @click.native="toggleProxy(true)">{{text.cloudProxy_enable}}</v-btn>
-                  <v-btn :value=false @click.native="toggleProxy(false)">{{text.cloudProxy_disable}}</v-btn>
-                </v-btn-toggle>
-              </v-card-text>
-              <v-card-text class="proxy" v-if="isEnableCloudProxy">
-                <v-label>{{text.cloudProxy_mode}}</v-label>
-                <v-btn-toggle v-model.lazy="fixProxyPort" rounded>
-                  <v-btn :value=false @click.native="toggleProxyMode(false)">{{text.cloudProxy_default}}</v-btn>
-                  <v-btn :value=true @click.native="toggleProxyMode(true)">{{text.cloudProxy_fix}}</v-btn>
-                </v-btn-toggle>
-                <v-card-text class="tip" v-if="fixProxyPort">
-                  <span class="tip_icon"></span>{{text.cloudProxy_tips}}
-                  <a href="https://docs.agora.io/cn/Audio%20Broadcast/cloud_proxy_web?platform=Web">{{text.cloudProxy_tips_link}}</a>
-                </v-card-text>
-              </v-card-text>
-              <v-card-text>
-                <v-list>
-                  <v-list-tile v-for="item in testSuites" :key="item.id">
-                    <v-list-tile-content>
-                      <v-list-tile-title>{{t(item.label)}}</v-list-tile-title>
-                    </v-list-tile-content>
-                  </v-list-tile>
-                </v-list>
-              </v-card-text> -->
-
             </v-card>
           </v-flex>
           <!-- result page -->
@@ -180,6 +152,9 @@
                         <v-card-text>
                           <p>RTM connection testing...</p>
                         </v-card-text>
+                        <v-card-text>
+                          <v-progress-linear :indeterminate="true"></v-progress-linear>
+                        </v-card-text>
                       </v-card>
                     </v-flex>
                   </v-layout>
@@ -206,6 +181,9 @@
                       <v-card>
                         <v-card-text>
                           <p>RTM connection testing...</p>
+                        </v-card-text>
+                        <v-card-text>
+                          <v-progress-linear :indeterminate="true"></v-progress-linear>
                         </v-card-text>
                       </v-card>
                     </v-flex>
@@ -284,12 +262,10 @@
 </template>
 
 <script>
-// import AgoraRtc from "agora-rtc-sdk";
 import AgoraRtc from 'agora-rtc-sdk-ng'
 const langs = ['zh', 'en'];
 import { profileArray, APP_ID as DEFINED_APP_ID, APP_ID } from "./utils/settings";
 import * as i18n from './utils/i18n'
-// import { initializeRtm } from './utils/rtmCheck'
 import AgoraRtm from 'agora-rtm-sdk'
 
 const sleep = msec => new Promise(resolve => setTimeout(resolve, msec));
