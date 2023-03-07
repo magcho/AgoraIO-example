@@ -32,34 +32,11 @@
                   {{text.following_step}}
                 </div>
               </v-card-title>
-              <v-card-text class="proxy">
-                <v-label>{{text.cloudProxy}}</v-label>
-                <v-btn-toggle v-model.lazy="isEnableCloudProxy" rounded>
-                  <v-btn :value=true @click.native="toggleProxy(true)">{{text.cloudProxy_enable}}</v-btn>
-                  <v-btn :value=false @click.native="toggleProxy(false)">{{text.cloudProxy_disable}}</v-btn>
-                </v-btn-toggle>
-              </v-card-text>
-              <v-card-text class="proxy" v-if="isEnableCloudProxy">
-                <v-label>{{text.cloudProxy_mode}}</v-label>
-                <v-btn-toggle v-model.lazy="fixProxyPort"rounded>
-                  <v-btn :value=false @click.native="toggleProxyMode(false)">{{text.cloudProxy_default}}</v-btn>
-                  <v-btn :value=true @click.native="toggleProxyMode(true)">{{text.cloudProxy_fix}}</v-btn>
-                </v-btn-toggle>
-                <v-card-text class="tip" v-if="fixProxyPort">
-                  <span class="tip_icon"></span>{{text.cloudProxy_tips}}
-                  <a href="https://docs.agora.io/cn/Audio%20Broadcast/cloud_proxy_web?platform=Web">{{text.cloudProxy_tips_link}}</a>
-                </v-card-text>
-              </v-card-text>
               <v-card-text>
-                <v-list>
-                  <v-list-tile v-for="item in testSuites" :key="item.id">
-                    <v-list-tile-content>
-                      <v-list-tile-title>{{t(item.label)}}</v-list-tile-title>
-                    </v-list-tile-content>
-                  </v-list-tile>
-                </v-list>
+                <v-btn v-if="!testing" color="success" @click.native="start">
+                  {{text.start_text}}
+                </v-btn>
               </v-card-text>
-
             </v-card>
           </v-flex>
           <!-- result page -->
@@ -71,16 +48,16 @@
                 </v-toolbar-title>
               </v-toolbar>
               <v-list>
-                <v-list-group v-for="item in testSuites" :key="item.id">
-                  <v-list-tile slot="activator">
+                <v-list-item v-for="item in testSuites" :key="item.id">                  
+                  <v-list-tile>
                     <v-icon v-if="item.notError" color="success">done</v-icon>
                     <v-icon v-else color="error">close</v-icon>
                     <span>{{t(item.label)}}</span>
                   </v-list-tile>
-                  <v-list-tile>
+                  <v-list-content class="result-content">
                     <v-list-tile-content v-html="item.extra"></v-list-tile-content>
-                  </v-list-tile>
-                </v-list-group>
+                  </v-list-content>
+                </v-list-item>
               </v-list>
             </v-card>
           </v-flex>
@@ -127,138 +104,94 @@
                     </v-layout>
                   </v-container>
                 </v-stepper-content>
-                <!-- microphone check -->
-                <v-stepper-content step="1">
-                  <v-container grid-list-md>
-                    <v-layout row wrap>
-                      <v-flex md6 xs12>
-                        <v-card color="info" style="height: 100%" class="white--text">
-                          <v-card-title>
-                            <div class="headline">
-                              {{text.microphone_check}}
-                            </div>
-                          </v-card-title>
-                          <v-card-text>
-                            {{text.microphone_check_desc}}
-                          </v-card-text>
-                        </v-card>
-                      </v-flex>
-                      <v-flex md6 xs12>
-                        <v-card style="height: 100%">
-                          <v-card-title>
-                            {{text.microphone_volume_check_desc}}
-                          </v-card-title>
-                          <v-card-text>
-                            <v-progress-linear :value="inputVolume"></v-progress-linear>
-                          </v-card-text>
-                        </v-card>
-                      </v-flex>
-                    </v-layout>
-                  </v-container>
-                </v-stepper-content>
-
-                <!-- speaker check -->
-                <v-stepper-content step="2">
-                  <v-container grid-list-md>
-                    <v-layout row wrap>
-                      <v-flex md6 xs12>
-                        <v-card color="info" class="white--text" style="height: 100%">
-                          <v-card-title>
-                            <div class="headline">{{text.speacker_check}}</div>
-                          </v-card-title>
-                          <v-card-text>
-                            {{text.speaker_check_desc}}
-                          </v-card-text>
-                          <v-card-actions>
-                            <v-btn @click="resolveCheck">{{text.yes}}</v-btn>
-                            <v-btn flat @click="rejectCheck">{{text.no}}</v-btn>
-                          </v-card-actions>
-                        </v-card>
-                      </v-flex>
-
-                      <v-flex md6 xs12>
-                        <v-card style="height: 100%">
-                          <v-card-title>
-                            <div class="headline">{{text.sample_music}}</div>
-                          </v-card-title>
-                          <v-card-text>
-                            <audio id="sampleMusic" controls="controls">
-                              <source src="./assets/music.mp3" type="audio/mp3">
-                              {{text.sample_music_desc}}
-                            </audio>
-                          </v-card-text>
-                        </v-card>
-                      </v-flex>
-                    </v-layout>
-                  </v-container>
-                </v-stepper-content>
-
-                <!-- resolution check -->
-                <v-stepper-content step="3">
-                  <v-container grid-list-md>
-                    <v-layout row wrap>
-                      <v-flex md6 xs12>
-                        <v-card color="info" class="white--text" style="height: 100%">
-                          <v-card-title>
-                            <div class="headline">{{text.resolution_check}}</div>
-                          </v-card-title>
-                          <v-card-text>
-                            {{text.resolution_check_desc}}
-                          </v-card-text>
-                        </v-card>
-                      </v-flex>
-
-                      <v-flex md6 xs12>
-                        <v-card style="height: 100%">
-                          <v-card-title>
-                            {{text.resolution_list}}
-                          </v-card-title>
-                          <v-card-text>
-                            <v-list>
-                              <v-list-tile v-for="(item, index) in profiles" :key="index">
-                                <v-list-tile-content>
-                                  {{`${item.width} * ${item.height}`}}
-                                </v-list-tile-content>
-                                <v-list-tile-action>
-                                  <v-icon v-if="item.status==='resolve'" color="success">done</v-icon>
-                                  <v-icon v-else-if="item.status==='reject'" color="error">close</v-icon>
-                                  <v-icon v-else>more_horiz</v-icon>
-                                </v-list-tile-action>
-                              </v-list-tile>
-                            </v-list>
-                          </v-card-text>
-                        </v-card>
-                      </v-flex>
-                    </v-layout>
-                  </v-container>
-                </v-stepper-content>
               </v-stepper-items>
 
-                <!-- connection check -->
-                <v-stepper-content step="4">
-                  <v-container grid-list-md>
-                    <v-layout row wrap>
-                      <v-flex md12>
-                        <v-card >
-                          <v-card-title>
-                            <div>{{text.network_check_desc}}</div>
-                          </v-card-title>
-                          <v-card-text v-if="renderChart">
-                            <v-layout row wrap>
-                              <v-flex md6 xs12>
-                                <linechart :grid="grid" :data="bitrateData" :settings="bitrateChartSettings"></linechart>
-                              </v-flex>
-                              <v-flex md6 xs12>
-                                <linechart :grid="grid" :data="packetsData" :settings="packetsChartSettings"></linechart>
-                              </v-flex>
-                            </v-layout>
-                          </v-card-text>
-                        </v-card>
-                      </v-flex>
-                    </v-layout>
-                  </v-container>
-                </v-stepper-content>
+              <!-- connection check -->
+              <v-stepper-content step="1">
+                <v-container grid-list-md>
+                  <v-layout row wrap>
+                    <v-flex md12>
+                      <v-card >
+                        <v-card-title>
+                          <div>{{text.network_check_desc}}</div>
+                        </v-card-title>
+                        <v-card-text v-if="renderChart">
+                          <v-layout row wrap>
+                            <v-flex md6 xs12>
+                              <linechart :grid="grid" :data="bitrateData" :settings="bitrateChartSettings"></linechart>
+                            </v-flex>
+                            <v-flex md6 xs12>
+                              <linechart :grid="grid" :data="packetsData" :settings="packetsChartSettings"></linechart>
+                            </v-flex>
+                          </v-layout>
+                        </v-card-text>
+                      </v-card>
+                    </v-flex>
+                  </v-layout>
+                </v-container>
+              </v-stepper-content>
+
+              <!-- rtm check -->              
+              <v-stepper-content step="2">
+                <v-container grid-list-md>
+                  <v-layout row wrap>
+                     <v-flex md6 xs12>
+                      <v-card style="height: 100%" color="info" class="white--text">
+                        <v-card-title>
+                          <div class="headline">
+                            RTM(normal) check
+                          </div>
+                        </v-card-title>
+                        <v-card-text>
+                          {{text.support_desc}}
+                        </v-card-text>
+                      </v-card>
+                    </v-flex>
+                    <v-flex md6 xs12>
+                      <v-card>
+                        <v-card-text>
+                          <p>RTM connection testing...</p>
+                        </v-card-text>
+                        <v-card-text>
+                          <v-progress-linear :indeterminate="true"></v-progress-linear>
+                        </v-card-text>
+                      </v-card>
+                    </v-flex>
+                  </v-layout>
+                </v-container>
+              </v-stepper-content>
+
+              <!-- rtm check -->
+              <v-stepper-content step="3">
+                <v-container grid-list-md>
+                  <v-layout row wrap>
+                    <v-flex md6 xs12>
+                      <v-card style="height: 100%" color="info" class="white--text">
+                        <v-card-title>
+                          <div class="headline">
+                            RTM(proxy) check
+                          </div>
+                        </v-card-title>
+                        <v-card-text>
+                          {{text.support_desc}}
+                        </v-card-text>
+                      </v-card>
+                    </v-flex>
+                    <v-flex md6 xs12>
+                      <v-card>
+                        <v-card-text>
+                          <p>RTM connection testing...</p>
+                        </v-card-text>
+                        <v-card-text>
+                          <v-progress-linear :indeterminate="true"></v-progress-linear>
+                        </v-card-text>
+                      </v-card>
+                    </v-flex>
+                  </v-layout>
+                </v-container> 
+              </v-stepper-content>
             </v-stepper>
+            
             <!-- test area -->
             <div id="test-send"></div>
             <div id="test-recv"></div>
@@ -329,17 +262,13 @@
 </template>
 
 <script>
-import  VConsole  from  'vconsole'
-import AgoraRtc from "agora-rtc-sdk";
+import AgoraRtc from 'agora-rtc-sdk-ng'
 const langs = ['zh', 'en'];
-import { profileArray, APP_ID } from "./utils/settings";
+import { profileArray, APP_ID as DEFINED_APP_ID, APP_ID } from "./utils/settings";
 import * as i18n from './utils/i18n'
+import AgoraRtm from 'agora-rtm-sdk'
 
-const log = console.log.bind(console)
-
-// If need mobile phone terminal debugging
-// let vConsole = new VConsole()
-// log("testVConsole")
+const sleep = msec => new Promise(resolve => setTimeout(resolve, msec));
 
 export default {
   name: "App",
@@ -379,29 +308,23 @@ export default {
           extra: ""
         },
         {
-          id: "1",
-          label: "microphone",
-          notError: true,
-          extra: ""
-        },
-        {
           id: "2",
-          label: "speaker",
+          label: "connection",
           notError: true,
           extra: ""
         },
         {
           id: "3",
-          label: "resolution",
+          label: 'rtm_disable_proxy',
           notError: true,
-          extra: ""
+          extra:''
         },
         {
           id: "4",
-          label: "connection",
+          label: 'rtm_enable_proxy',
           notError: true,
-          extra: ""
-        }
+          extra:''
+        },
       ],
       bitrateData: {
           columns: ['index', 'tVideoBitrate', 'tAudioBitrate'],
@@ -438,7 +361,8 @@ export default {
           isSuccess: false
         },
       ],
-      currentProfile: 0
+      currentProfile: 0,
+      isUsingProxyRtcStatus: false,
     };
   },
 
@@ -473,6 +397,9 @@ export default {
         },
       }
     },
+    appId(){
+      return DEFINED_APP_ID || APP_ID
+    }
   },
 
   methods: {
@@ -486,6 +413,7 @@ export default {
     },
 
     initialize() {
+      window.global_sendStream = {}
       this.ts = new Date().getTime();
       this.channel =
         String(this.ts).slice(7) +
@@ -493,133 +421,103 @@ export default {
       this.sendId = Number.parseInt(String(this.ts).slice(7), 10) * 10 + 1;
       this.recvId = Number.parseInt(String(this.ts).slice(7), 10) * 10 + 2;
       this.sendClient = AgoraRtc.createClient({ mode: 'live', codec: 'h264' });
+      this.sendClient.setClientRole('host');
       this.recvClient = AgoraRtc.createClient({ mode: 'live', codec: 'h264' });
+      this.recvClient.setClientRole('audience')
       if(this.isEnableCloudProxy && this.fixProxyPort){
-        this.sendClient.startProxyServer(2);
-        this.recvClient.startProxyServer(2);
+        // eslint-disable-next-line no-unused-vars
+        const Force_UDPモード = 3
+        // eslint-disable-next-line no-unused-vars
+        const Force_TCPモード = 5
+        this.sendClient.startProxyServer(Force_UDPモード);
+        this.recvClient.startProxyServer(Force_UDPモード);
       }
       else if(this.isEnableCloudProxy && !this.fixProxyPort){
         this.sendClient.startProxyServer();
         this.recvClient.startProxyServer();
       }
+
+      this.sendClient.on('join-fallback-to-proxy', ()=>{
+          this.isUsingProxyRtcStatus = true
+          console.log(':sushi:','fallback' )
+        }
+      )
     },
 
-    initSendClient() {
-      return new Promise((resolve, reject) => {
-        this.sendStream = AgoraRtc.createStream({
-          streamID: this.sendId,
-          video: true,
-          audio: true,
-          screen: false
-        });
-        this.sendStream.setVideoProfile("720p_2");
-        this.sendClient.init(
-          APP_ID,
-          () => {
-            this.sendStream.init(
-              () => {
-                this.sendClient.join(
-                  null,
-                  this.channel,
-                  this.sendId,
-                  () => {
-                    this.sendClient.publish(this.sendStream, err => {
-                      reject(err);
-                    });
-                    setTimeout(() => {
-                      resolve();
-                    });
-                  },
-                  err => {
-                    reject(err);
-                  }
-                );
-              },
-              err => {
-                reject(err);
-              }
-            );
-          },
-          err => {
-            reject(err);
-          }
-        );
-      });
+    async initSendClient() {        
+        window.global_sendStream = {
+          audio: await AgoraRtc.createMicrophoneAudioTrack(),
+          video: await AgoraRtc.createCameraVideoTrack()
+        }        
+        await this.sendClient.join(this.appId, this.channel, null)
+        await this.sendClient.publish([window.global_sendStream.audio, window.global_sendStream.video])
     },
 
-    initRecvClient() {
-      return new Promise((resolve, reject) => {
-        this.recvClient.init(
-          APP_ID,
-          () => {
-            this.recvClient.join(
-              null,
-              this.channel,
-              this.recvId,
-              () => {
-                this.recvClient.on("stream-added", evt => {
-                  this.recvClient.subscribe(evt.stream, err => {
-                    clearInterval(this.detectInterval);
-                    this.bitrateData = {};
-                    this.packetsData = {};
-                    this.testSuites["4"].notError = false;
-                    this.testSuites["4"].extra = err.msg;
-                    this.destructAll();
-                    this.currentTestSuite = "5";
-                  });
-                });
-                this.recvClient.on("stream-removed", () => {
-                  clearInterval(this.detectInterval);
-                  this.bitrateData = {};
-                  this.packetsData = {};
-                  this.testSuites["4"].notError = false;
-                  this.testSuites["4"].extra = "Disconnected";
-                  this.destructAll();
-                  this.currentTestSuite = "5";
-                });
-                this.recvClient.on("stream-subscribed", evt => {
-                  this.recvStream = evt.stream;
-                  this.recvStream.disableAudio();
-                  this.recvStream.play("test-recv");
-                  let i = 1;
-                  this.detectInterval = setInterval(() => {
-                    this.recvStream.getStats(e => {
-                      this.bitrateData.rows.push({
-                        index: i,
-                        tVideoBitrate: this._calcBitrate(
-                          e.videoReceiveBytes, i
-                        ),
-                        tAudioBitrate: this._calcBitrate(
-                          e.audioReceiveBytes, i
-                        )
-                      });
-                      this.packetsData.rows.push({
-                        index: i,
-                        tVideoPacketLoss: this._calcPacketLoss(
-                          e.videoReceivePackets,
-                          e.videoReceivePacketsLost
-                        ),
-                        tAudioPacketLoss: this._calcPacketLoss(
-                          e.audioReceivePackets,
-                          e.audioReceivePacketsLost
-                        ),
-                      });
-                      i++;
-                    });
-                  }, 1000);
-                });
-                resolve();
-              },
-              err => {
-                reject(err);
-              }
-            );
-          },
-          err => {
-            reject(err);
+    async initRecvClient() {
+      await this.recvClient.join(this.appId, this.channel, null)
+
+      this.recvClient.on('user-published', async (remoteUser, mediatype)=>{
+        try {
+          await this.recvClient.subscribe(remoteUser, mediatype)  
+
+          // this.recvStream = evt.stream;
+          if(mediatype === 'video'){
+            remoteUser.videoTrack.play("test-recv")
           }
-        );
-      });
+            // this.recvStream.disableAudio();
+            
+            let i = 1;
+            if(this.detectInterval){
+              clearInterval(this.detectInterval)
+            }
+            this.detectInterval = setInterval(() => {
+              const videoStats = Object.values(this.recvClient.getRemoteVideoStats())[0]                        
+              const audioStats = Object.values(this.recvClient.getRemoteAudioStats())[0]
+
+              this.bitrateData.rows.push({
+                index: i,
+                tVideoBitrate: this._calcBitrate(
+                  videoStats.receiveBytes, i
+                ),
+                tAudioBitrate: this._calcBitrate(
+                  audioStats.receiveBytes, i
+                )
+              })
+
+              this.packetsData.rows.push({
+                index: i,
+                tVideoPacketLoss: this._calcPacketLoss(
+                  videoStats.receivePackets,
+                  videoStats.receivePacketsLost  
+                ),
+                tAudioPacketLoss: this._calcPacketLoss(
+                  audioStats.receivePackets,
+                  audioStats.receivePacketsLost
+                ),
+              });
+              i++;
+            }, 1000);
+          
+        }catch (err){
+          clearInterval(this.detectInterval);
+          this.bitrateData = {};
+          this.packetsData = {};
+          this.testSuites[1].notError = false;
+          this.testSuites[1].extra = err.msg;
+          await this.destructAll();
+          this.currentTestSuite = "5";
+        }
+      })
+      // eslint-disable-next-line no-unused-vars
+      this.recvClient.on('user-unpublished', async _ => {
+        clearInterval(this.detectInterval);
+        this.bitrateData = {};
+        this.packetsData = {};
+        this.testSuites[1].notError = false;
+        this.testSuites[1].extra = "Disconnected";
+        await this.destructAll();
+        this.currentTestSuite = "5";
+      })
     },
 
     /**
@@ -645,11 +543,17 @@ export default {
       return Number.parseFloat(recvBytes / seconds / 1000 * 8).toFixed(2);
     },
 
-    destructAll() {
+    async destructAll() {
       try {
-        this.sendStream && this.sendStream.close();
+        if(window.global_sendStream){
+          window.global_sendStream.audio.stop()
+          window.global_sendStream.audio.close()  
+          
+          window.global_sendStream.video.stop()
+          window.global_sendStream.video.close()
+        }
         this.recvStream && this.recvStream.close();
-        this.sendClient.unpublish(this.sendStream);
+        // await this.sendClient.unpublish([window.global_sendStream.audio, window.global_sendStream.video]);
         this.sendClient.leave();
         this.recvClient.leave();
         if(this.isEnableCloudProxy){
@@ -662,41 +566,8 @@ export default {
       }
     },
 
-    checkProfile(profile) {
-      return new Promise((resolve, reject) => {
-        this.sendStream && this.sendStream.stop();
-        this.sendStream = AgoraRtc.createStream({
-          streamID: this.sendId,
-          video: true,
-          audio: true,
-          screen: false
-        });
-        this.sendStream.setVideoProfile(profile.resolution);
-        this.sendStream.init(
-          () => {
-            this.sendStream.play("test-send");
-            setTimeout(() => {
-              let videoElement = document.querySelector("#video" + this.sendId);
-              let videoArea = videoElement.videoWidth * videoElement.videoHeight
-              let profileArea = profile.width * profile.height
-              if (videoArea === profileArea) {
-                profile.status = "resolve";
-                resolve();
-              } else {
-                profile.status = "reject";
-                reject("Resolution mismatched");
-              }
-            }, 1000);
-          },
-          err => {
-            reject(err);
-          }
-        );
-      });
-    },
-
     start() {
-      if (!APP_ID) {
+      if (!this.appId) {
         alert("APP_ID cannot be empty!");
         return;
       }
@@ -748,83 +619,17 @@ export default {
     handleCompatibilityCheck() {
       this.currentTestSuite = "0";
       let testSuite = this.testSuites["0"];
-      setTimeout(() => {
-        testSuite.notError = AgoraRtc.checkSystemRequirements();
-        testSuite.notError
-          ? (testSuite.extra = this.t("fully_supported"))
-          : (testSuite.extra = this.t("some_functions_may_be_limited"));
-        this.handleMicrophoneCheck();
+      setTimeout(async () => {
+        testSuite.notError =  AgoraRtc.checkSystemRequirements();
+        if(testSuite.notError){
+          (testSuite.extra = this.t("fully_supported")) 
+        }else{
+          (testSuite.extra = this.t("some_functions_may_be_limited"));
+        }
+        await this.handleConnectivityCheck()
       }, 3000);
     },
 
-    handleMicrophoneCheck() {
-      this.currentTestSuite = "1";
-      let testSuite = this.testSuites["1"];
-      this.sendStream = AgoraRtc.createStream({
-        streamID: this.sendId,
-        video: false,
-        audio: true,
-        screen: false
-      });
-      this.sendStream.init(
-        () => {
-          this.sendStream.play("test-send");
-          let totalVolume = 0;
-          this.microphoneCheckTimer = setInterval(() => {
-            this.inputVolume = Math.floor(
-              this.sendStream.getAudioLevel() * 100
-            );
-            totalVolume += this.inputVolume;
-          }, 100);
-          setTimeout(() => {
-            clearInterval(this.microphoneCheckTimer);
-            this.sendStream.close();
-            if (totalVolume < 60) {
-              testSuite.notError = false;
-              testSuite.extra = this.t("can_barely_hear_you");
-            } else {
-              testSuite.extra = this.t("microphone_works_well");
-            }
-            this.handleSpeakerCheck();
-          }, 7000);
-        },
-        err => {
-          // do next test
-          testSuite.notError = false;
-          testSuite.extra = err.msg;
-          try {
-            this.sendStream.close();
-          } catch (error) {
-            throw(error);
-          } finally {
-            this.handleSpeakerCheck();
-          }
-        }
-      );
-    },
-
-    handleSpeakerCheck() {
-      this.currentTestSuite = "2";
-    },
-
-    resolveCheck() {
-      let testSuite = this.testSuites[this.currentTestSuite];
-      testSuite.extra = this.t('speaker_works_well');
-      let sound = document.querySelector("#sampleMusic");
-      sound.pause();
-      sound.currentTime = 0;
-      this.handleCameraCheck();
-    },
-
-    rejectCheck() {
-      let testSuite = this.testSuites[this.currentTestSuite];
-      testSuite.notError = false;
-      testSuite.extra = this.t("speaker_wrong");
-      let sound = document.querySelector("#sampleMusic");
-      sound.pause();
-      sound.currentTime = 0;
-      this.handleCameraCheck();
-    },
 
     toggleProxy(val) {
       this.isEnableCloudProxy = val;
@@ -834,63 +639,33 @@ export default {
       this.fixProxyPort = val;
     },
 
-    async handleCameraCheck() {
-      this.currentTestSuite = "3";
-      let testSuite = this.testSuites["3"];
-      for (let item of this.profiles) {
-        await this.checkProfile(item)
-          .then(() => {
-            this.sendStream && this.sendStream.close();
-          })
-          .catch(err => {
-            if (err === "Resolution mismatched") {
-              testSuite.notError = false;
-              testSuite.extra = err.msg;
-              this.sendStream && this.sendStream.close();
-            }
-          });
-      }
-
-      if (this.profiles) {
-        let arr = [];
-        this.profiles.forEach(item => {
-          let str = `${item.width} * ${item.height} ${
-            this.t(item.status === "resolve" ? "support" : "not_support")
-          }`;
-          arr.push(str);
-        });
-        testSuite.extra = arr.join("</br>");
-      }
-
-      setTimeout(() => {
-        this.handleConnectivityCheck();
-      }, 1500);
-    },
-
     async handleConnectivityCheck() {
-      this.currentTestSuite = "4";
-      let testSuite = this.testSuites["4"];
+      this.currentTestSuite = "1";
+      let testSuite = this.testSuites[1];
       // init client and stream
       try {
         await this.initRecvClient();
-        await this.initSendClient();
+        setTimeout(async() => {
+          await this.initSendClient();
+        }, 1000);        
         this.renderChart = true;
       } catch (err) {
         testSuite.extra = err.msg;
         testSuite.notError = false;
-        setTimeout(() => {
+        setTimeout(async () => {
           this.testing = false;
-          this.currentTestSuite = "5";
+          // this.currentTestSuite = "5";
           this.snackbar = true;
+          await this.destructAll()
         }, 1500);
         return false;
       }
       // go on
-      setTimeout(() => {
-        this.destructAll();
-        setTimeout(() => {
+      setTimeout(async () => {
+        await this.destructAll();
+        setTimeout(async () => {
           this.testing = false;
-          this.currentTestSuite = "5";
+          // this.currentTestSuite = "5";
           this.snackbar = true;
           if (
             this.bitrateData.rows.length === 1 ||
@@ -920,12 +695,95 @@ export default {
             testSuite.extra = `${ this.t('Video_Bitrate')}: ${ videoBitrate } kbps </br>
             ${ this.t('Audio_Bitrate')}: ${ audioBitrate } kbps </br>
             ${ this.t('Video_Packet_Loss')}: ${ videoPacketLoss } % </br>
-            ${ this.t('Audio_Packet_Loss')}: ${ audioPacketLoss } % </br>`;
+            ${ this.t('Audio_Packet_Loss')}: ${ audioPacketLoss } % </br>
+            proxyStatus: ${this.isUsingProxyRtcStatus.toString()}`;
           }
+          await this.rtmCheckDisableProxy()
+          await this.rtmCheckEnableProxy()
         }, 1500);
       }, 21500);
     },
 
+    async rtmCheckDisableProxy(){
+      this.testing = true;
+      this.currentTestSuite = "2";       
+      const testSuite = this.testSuites[2]
+      try {
+        // 初期化処理をして、コネクションを貼れれば疎通したとみなす
+        await this.initializeRtm({useProxy: false})
+        /** loginをするとLOGGEDINイベントが発火した後、ちょっとしてから
+         *  login failedエラーが起こり、エラーをイベントで拾えないのでちょっとするまで待つ
+        */        
+        await sleep(2000) 
+      } catch (error) {        
+        this.testing = false;
+        this.currentTestSuite = "3";
+
+        testSuite.extra = 'conection NG (RTM)'
+        testSuite.notError = false
+        console.error(error)
+
+        return
+      }
+
+      this.testing = false;
+      this.currentTestSuite = "3";
+      testSuite.extra = 'conection OK (RTM)'
+      testSuite.notError = true
+    },
+
+    async rtmCheckEnableProxy(){
+      this.testing = true;
+      this.currentTestSuite = "3";       
+      const testSuite = this.testSuites[3]
+      try {
+        // 初期化処理をして、コネクションを貼れれば疎通したとみなす
+        await this.initializeRtm({useProxy: true})
+        
+      } catch (error) {        
+        this.testing = false;
+        this.currentTestSuite = "5";
+
+        testSuite.extra = 'conection NG (RTM)'
+        testSuite.notError = false
+        console.error(error)
+
+        return
+      }
+
+      this.testing = false;
+      this.currentTestSuite = "5";
+      testSuite.extra = 'conection OK (RTM)'
+      testSuite.notError = true
+    },
+    async initializeRtm({useProxy}){
+      return new Promise(async (resolve, reject)=>{
+        const appId = this.appId
+
+        const client = AgoraRtm.createInstance(appId,{
+          enableCloudProxy: useProxy,
+          logFilter: AgoraRtm.LOG_FILTER_DEBUG 
+        })
+
+        client.on('ConnectionStateChanged', async (state, reason)=>{
+          if(state === 'CONNECTED'){
+            resolve(state)
+          }else if(state === 'CONNECTING') {
+            // noop
+          }else{
+            reject(state)
+          }          
+        })
+
+        try{
+          await client.login({
+            uid: (Math.random()*10000).toString(),
+          })          
+        }catch(e){
+          reject(e)
+        }
+      })
+    },
     haveATry() {
       this.snackbar = false;
       this.dialog = true;
@@ -942,9 +800,9 @@ export default {
     },
 
     retry(currentIndex) {
-      if (this.sendStream && this.sendStream.isPlaying()) {
-        this.sendStream.stop();
-        this.sendStream.close();
+      if (window.global_sendStream && window.global_sendStream.isPlaying()) {
+        window.global_sendStream.stop();
+        window.global_sendStream.close();
       }
       //If the resolution is equal to not supported, 1. Do not play video stream; 2. Give error prompt
       if (this.ProfileForTry[currentIndex].isSuccess) {
@@ -953,16 +811,16 @@ export default {
         this.showVideo = false
         return
       }
-      this.sendStream = AgoraRtc.createStream({
+      window.global_sendStream = AgoraRtc.createStream({
         streamID: this.sendId,
         video: true,
         audio: true,
         screen: false
       });
-      this.sendStream.setVideoProfile(this.ProfileForTry[currentIndex].resolution);
-      this.sendStream.init(
+      window.global_sendStream.setVideoProfile(this.ProfileForTry[currentIndex].resolution);
+      window.global_sendStream.init(
         () => {
-          this.sendStream.play("modal-video");
+          window.global_sendStream.play("modal-video");
         },
         err => {
           this.errMsgForTry = err.msg;
@@ -972,8 +830,8 @@ export default {
 
     endTry() {
       this.dialog = false;
-      this.sendStream.stop();
-      this.sendStream.close();
+      window.global_sendStream.stop();
+      window.global_sendStream.close();
     }
   }
 };
@@ -1116,4 +974,7 @@ export default {
   .v-card {
     min-width: 280px;
   }
+.v-list__tile__content{
+  margin-left: 4rem;
+}
 </style>

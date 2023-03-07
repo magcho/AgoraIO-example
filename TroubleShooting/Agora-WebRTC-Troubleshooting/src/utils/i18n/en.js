@@ -57,6 +57,7 @@ export default {
   'cloudProxy_default': 'default',
   'cloudProxy_fix': 'TCP 443',
   'cloudProxy_tips': 'To use proxy via TCP port 443 only, please call startProxyServer(2), for details please check:',
-  'cloudProxy_tips_link': 'here'
-
+  'cloudProxy_tips_link': 'here',
+  'rtm_disable_proxy': 'RTM(nomal)',
+  'rtm_enable_proxy': 'RTM(proxy)'
 }
